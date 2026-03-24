@@ -1,5 +1,12 @@
 package domain
 
+import (
+	"fmt"
+	"regexp"
+
+	core_errors "github.com/fenzit/golang-todoapp/internal/core/errors"
+)
+
 type User struct {
 	ID      int
 	Version int
@@ -32,4 +39,35 @@ func NewUserUninitialized(
 		fullName,
 		phoneNumber,
 	)
+}
+
+func (u *User) Validate() error {
+	fullNameLength := len([]rune(u.FullName))
+	if fullNameLength < 3 || fullNameLength > 100 {
+		return fmt.Errorf(
+			"invalid fullname len: %d: %w",
+			fullNameLength,
+			core_errors.ErrInvalidArgument,
+		)
+	}
+
+	if u.PhoneNumber != nil {
+		phoneNumberLength := len([]rune(*u.PhoneNumber))
+		if phoneNumberLength < 10 || phoneNumberLength > 15 {
+			return fmt.Errorf(
+				"invalid phonenumber len: %d:%w",
+				phoneNumberLength,
+				core_errors.ErrInvalidArgument,
+			)
+		}
+
+		re := regexp.MustCompile(`^\+[0-9]+$`)
+		if !re.MatchString(*u.PhoneNumber) {
+			return fmt.Errorf(
+				"invalid phone number format: %w",
+				core_errors.ErrInvalidArgument,
+			)
+		}
+	}
+	return nil
 }
